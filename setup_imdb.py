@@ -9,7 +9,7 @@ Created on Thu Jun 15 16:28:19 2017
 from scipy.io import loadmat
 import magic
 import re
-import pickle
+import dill
 
 train_data = loadmat('wider_face_split/wider_face_train.mat', matlab_compatible = False, struct_as_record = False)
 class my_imdb :
@@ -39,4 +39,5 @@ for i in range(train_data['event_list'].size):
         imdb.rects.append(bboxList[j][0])
         imdb.eventId.append(i)
         
-pickle.dump(imdb, open("imdb", "wb"))
+with open('imdb.pkl', 'wb') as f :
+    dill.dump(imdb, f)
