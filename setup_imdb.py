@@ -12,17 +12,16 @@ import re
 import pickle
 
 train_data = loadmat('wider_face_split/wider_face_train.mat', matlab_compatible = False, struct_as_record = False)
-class imdb :
-    imageDir = 'data/WIDER_train/images/'
-    class images :
-        name = []
-        size = []
-        imageSet = 0
-    class labels :
-        rects = []
-        eventId = []
+class my_imdb :
+    def __init__(self, imageDir) :
+        self.imageDir = imageDir
+        self.name = []
+        self.size = []
+        self.imageSet = []
+        self.rects = []
+        self.eventId = []
 
-imdb = imdb()
+imdb = my_imdb('data/WIDER_train/images/')
 count = 0
 for i in range(train_data['event_list'].size):
     imageDir = imdb.imageDir + str(train_data['event_list'][i][0])[3:-2] + '/'
@@ -31,13 +30,13 @@ for i in range(train_data['event_list'].size):
     for j in range(imageList.size):
         count += 1
         imagePath = str(imageList[j][0][0]) + '.jpg'
-        imdb.images.name.append(imagePath)
+        imdb.name.append(str(train_data['event_list'][i][0])[3:-2] + '/' + imagePath)
         
         height, width = re.findall('(\d+)x(\d+)', magic.from_file(imageDir + imagePath))[1]
-        imdb.images.size.append([int(height), int(width)])
+        imdb.size.append([int(height), int(width)])
         
-        imdb.images.imageSet = 1
-        imdb.labels.rects.append(bboxList[i][0])
-        imdb.labels.eventId.append(i)
+        imdb.imageSet = 1
+        imdb.rects.append(bboxList[j][0])
+        imdb.eventId.append(i)
         
-pickle.dump(imdb, open("imdb.pickle", "wb"))
+pickle.dump(imdb, open("imdb", "wb"))
