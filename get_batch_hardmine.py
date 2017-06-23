@@ -137,38 +137,31 @@ def cnn_get_batch_hardmine(imagePaths, imageSizes, labelRects):
             dww = dx2 - dx1 + 1
             fcx = (fxx1 + fxx2) / 2
             fcy = (fyy1 + fyy2) / 2
-            tx = (fcx - coarse_xx) / dww
-            ty = (fcy - coarse_yy) / dhh
+            tx = (fcx - coarse_xx[:, :, None, None]) / dww[:, :, :, None]
+            ty = (fcy - coarse_yy[:, :, None, None]) / dhh[:, :, :, None]
             fhh = fyy2 - fyy1 + 1
             fww = fxx2 - fxx1 + 1
-            tw = np.log(fww / dww)
-            th = np.log(fhh / dhh)
+            tw = np.log(fww / dww[:, :, :, None])
+            th = np.log(fhh / dhh[:, :, :, None])
         if len(iou) > 0:
-            iou = iou + 1e6 * np.random.rand(iou.shape)
+            iou = iou + 1e-6 * np.random.random(iou.shape)
         clsmap = -np.ones((63, 63, 25))
         regmap = np.zeros((63, 63, 100))
         if ng > 0 :
             best_iou = np.amax(iou, axis = 3)
             best_face_per_loc = np.argmax(iou, axis = 3)
-            regidx = np.ravel_multi_index(np.array((np.array(range(63*63*25)), np.ravel(best_face_per_loc, order = 'F'))), dims = (63 * 63 * 25), order = 'F')
-            tx = np.reshape(tx.ravel(order = 'F')[regidx], 63, 63, 25)
-            ty = np.reshape(ty.ravel(order = 'F')[regidx], 63, 63, 25)
-            temp = np.ones((63, 63, 1, ng))
-            for j in range(ng) :
-                temp[:, :, 1, j] *= tw[0, 0, 0, j]
-            tw[:] = temp
-            tw = np.reshape(tw.ravel(order = 'F')[regidx], 63, 63, 25)
-            temp = temp = np.ones((63, 63, 1, ng))
-            for j in range(ng) :
-                temp[:, :, 1, j] *= th[0, 0, 0, j]
-            th[:] = temp
-            th = np.reshape(th.ravel(order = 'F')[regidx], 63, 63, 25)
+            regidx = np.ravel_multi_index(np.array((np.array(range(63*63*25)), np.ravel(best_face_per_loc, order = 'F'))), dims = (63 * 63 * 25, ng), order = 'F')
+            tx = tx.ravel(order = 'F')[regidx].reshape(63, 63, 25)
+            ty = ty.ravel(order = 'F')[regidx].reshape(63, 63, 25)
+            tw = np.tile(tw, [63, 63, 1, 1])
+            tw = tw.ravel(order = 'F')[regidx].reshape(63, 63, 25)
+            th = np.tile(th, [63, 63, 1, 1])
+            th = th.ravel(order = 'F')[regidx].reshape(63, 63, 25)
             regmap = np.concatenate((tx, ty, tw, th), axis = 2)
-            
-            temp = iou.reshape(8, 3)[[0, 4, 2, 6, 1, 5, 3, 7], :]
-            iou_ = np.amax(temp, axis = 0)
-            fbest_idx = np.argmax(temp, axis = 0)
-            clsmap.ravel(order = 'F')[fbest_idx(iou_ > negThres)] = 1
+            iou = iou.ravel(order = 'F').reshape(ng, 63*63*25).T
+            iou_ = np.amax(iou, axis = 0)
+            fbest_idx = np.argmax(iou, axis = 0)
+            clsmap.ravel(order = 'F')[fbest_idx[iou_ > negThres]] = 1
             clsmap = np.maximum(clsmap, (best_iou >= posThres) * 2 - 1)
             gray = -np.ones(clsmap.shape)
             gray = gray * np.logical_and(best_iou >= negThres, best_iou < posThres)
