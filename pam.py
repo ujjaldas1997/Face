@@ -86,10 +86,11 @@ def kmedoids(data, k):
 	pre_cost, medoids = totalCost(data, 0, medoids_idx)
 	if debugEnabled == True:
 		print('pre_cost: ', pre_cost)
-		#print('medioids: ', medoids)
+		print('medioids: ', medoids)
+	# Init the results with the current setting
 	current_cost = pre_cost
-	best_choice = []
-	best_res = {}
+	best_choice = medoids_idx
+	best_res = dict(medoids)
 	iter_count = 0
 
 	while True:
@@ -121,12 +122,12 @@ def kmedoids(data, k):
 			break
 
 		# Update the cost and medoids
-		if current_cost <= pre_cost:
+		if current_cost < pre_cost:
 			pre_cost = current_cost
 			medoids = best_res
 			medoids_idx = best_choice
 
-	return(current_cost, best_choice, best_res)
+        return(current_cost, best_choice, best_res)
  
 
 '''def main(): 
